@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: advisor_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ai-investment-advisor
+    volumes:
+      - mongo_data:/data/db
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: advisor_ai_service
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: advisor_backend
+    restart: always
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - MONGODB_URI=mongodb://mongodb:27017/ai-investment-advisor
+      - AI_SERVICE_URL=http://ai-service:8000
+      - JWT_SECRET=super_secret_jwt_key_ai_investment_advisor_2026
+    depends_on:
+      - mongodb
+      - ai-service
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: advisor_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

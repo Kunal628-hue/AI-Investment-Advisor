@@ -12,6 +12,43 @@ export default function EquinoxAIChatModal({ isOpen, onClose }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+    const lines = text.split('\n');
+
+    return lines.map((line, lIdx) => {
+      if (!line.trim()) return <div key={lIdx} className="h-1.5" />;
+
+      let isHeader = false;
+      let cleanLine = line;
+      if (line.startsWith('### ')) {
+        isHeader = true;
+        cleanLine = line.replace('### ', '');
+      }
+
+      const parts = cleanLine.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+      const renderedParts = parts.map((part, pIdx) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={pIdx} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
+        }
+        if (part.startsWith('*') && part.endsWith('*')) {
+          return <em key={pIdx} className="italic text-slate-800">{part.slice(1, -1)}</em>;
+        }
+        return part;
+      });
+
+      if (isHeader) {
+        return <h4 key={lIdx} className="font-bold text-slate-900 text-sm mt-2 mb-1">{renderedParts}</h4>;
+      }
+
+      return (
+        <p key={lIdx} className="mb-1 leading-relaxed">
+          {renderedParts}
+        </p>
+      );
+    });
+  };
+
   if (!isOpen) return null;
 
   const handleSend = async (e) => {
@@ -97,13 +134,13 @@ export default function EquinoxAIChatModal({ isOpen, onClose }) {
                 </div>
               )}
               <div 
-                className={`max-w-[80%] p-3.5 rounded-2xl ${
+                className={`max-w-[85%] p-3.5 rounded-2xl ${
                   m.sender === 'user' 
                     ? 'bg-[#00A878] text-white rounded-br-none font-medium shadow-sm' 
                     : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-sm'
                 }`}
               >
-                {m.text}
+                {renderFormattedText(m.text)}
               </div>
               {m.sender === 'user' && (
                 <div className="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center shrink-0 font-bold text-[10px]">

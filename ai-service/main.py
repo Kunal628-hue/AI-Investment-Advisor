@@ -289,12 +289,12 @@ def api_chat(req: ChatRequest):
     msg_lower = user_msg.lower()
     if any(g in msg_lower for g in ["hi", "hello", "hey", "greetings"]):
         reply = (
-            f"Hello! I am **Equinox AI**, your quantitative financial and portfolio optimization assistant.\n\n"
+            f"Hello! I am **Equinox AI**, your financial and portfolio optimization assistant.\n\n"
             f"I am actively monitoring your portfolio (**{tickers_str}**) with total capital of **{capital_str}**.\n\n"
             f"How can I assist your investment strategy today? You can ask me:\n"
-            f"• **Stock & Business Analysis**: *'How is RELIANCE performing?'*, *'What is PE ratio?'*\n"
-            f"• **Risk & Optimization**: *'How to improve my Sharpe ratio?'*, *'Explain drawdown guardrails'*;\n"
-            f"• **Growth & Rebalancing**: *'Which stocks offer high growth?'*"
+            f"• **Stock & Business Analysis**: How to evaluate PE ratios, revenue momentum, or company fundamentals.\n"
+            f"• **Risk & Sharpe Optimization**: How to improve Sharpe ratios and limit portfolio drawdown.\n"
+            f"• **Growth & Rebalancing**: Recommended asset weighting strategies."
         )
     elif "risk" in msg_lower:
         reply = (

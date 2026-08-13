@@ -76,11 +76,16 @@ export const AuthProvider = ({ children }) => {
       email: email || (role === 'admin' ? 'admin@advisor.com' : 'investor@advisor.com'),
       role: role,
       riskProfile: {
-        score: 65,
-        category: 'Balanced Aggressive',
-        timeHorizon: '5-10 years',
-        primaryGoal: 'Wealth Growth',
-        maxLossTolerancePct: 20
+        isConfigured: false,
+        score: 50,
+        category: 'Unconfigured',
+        timeHorizon: '',
+        primaryGoal: '',
+        lossTolerance: '',
+        incomeStability: '',
+        answers: {},
+        driftHistory: [],
+        updatedAt: null
       },
       darkMode: true
     };

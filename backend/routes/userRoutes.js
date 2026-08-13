@@ -48,39 +48,66 @@ router.put('/profile', protect, async (req, res) => {
 // @desc    Submit investor questionnaire & calculate risk profile
 router.post('/risk-profile', protect, async (req, res) => {
   try {
-    const { timeHorizon, primaryGoal, maxLossTolerancePct, liquidityNeed, ageGroup } = req.body;
+    const { 
+      score: bodyScore, 
+      category: bodyCategory, 
+      timeHorizon, 
+      primaryGoal, 
+      maxLossTolerancePct, 
+      lossTolerance,
+      incomeStability,
+      answers,
+      driftHistory
+    } = req.body;
 
-    let score = 50;
+    let score = bodyScore;
+    let category = bodyCategory;
 
-    // Time horizon scoring
-    if (timeHorizon === '>10 years') score += 20;
-    else if (timeHorizon === '5-10 years') score += 10;
-    else if (timeHorizon === '1-3 years') score -= 15;
+    if (score === undefined || score === null) {
+      score = 50;
+      if (timeHorizon === '>10 years' || timeHorizon === '10+ Years' || timeHorizon === '5-10 Years' || timeHorizon === '5-10y') score += 10;
+      if (timeHorizon === '1-3y' || timeHorizon === '1-3 Years') score -= 15;
 
-    // Loss tolerance scoring
-    if (maxLossTolerancePct >= 30) score += 25;
-    else if (maxLossTolerancePct >= 15) score += 10;
-    else if (maxLossTolerancePct <= 5) score -= 20;
+      if (maxLossTolerancePct >= 30 || lossTolerance === 'Aggressive') score += 25;
+      else if (maxLossTolerancePct >= 15 || lossTolerance === 'Moderate') score += 10;
 
-    // Primary goal
-    if (primaryGoal === 'Aggressive Growth') score += 20;
-    else if (primaryGoal === 'Capital Preservation') score -= 20;
+      if (primaryGoal === 'Aggressive Growth' || primaryGoal === 'Maximum Growth') score += 20;
+      else if (primaryGoal === 'Capital Preservation') score -= 20;
 
-    // Bound score to 0 - 100
-    score = Math.max(0, Math.min(100, score));
+      score = Math.max(0, Math.min(100, score));
+    }
 
-    let category = 'Balanced Moderate';
-    if (score < 30) category = 'Conservative';
-    else if (score < 60) category = 'Balanced Moderate';
-    else if (score < 80) category = 'Balanced Aggressive';
-    else category = 'Aggressive Growth';
+    if (!category) {
+      if (score < 35) category = 'Conservative Investor';
+      else if (score < 65) category = 'Balanced Investor';
+      else if (score < 85) category = 'Balanced Aggressive Investor';
+      else category = 'Aggressive Growth Investor';
+    }
+
+    const currentMonth = new Date().toLocaleString('en-US', { month: 'short' });
+    let existingDrift = req.user.riskProfile?.driftHistory || [];
+    if (!existingDrift || existingDrift.length === 0) {
+      existingDrift = [
+        { month: 'May', score: 50 },
+        { month: 'Jun', score: 52 },
+        { month: 'Jul', score: 48 },
+        { month: 'Aug', score: 58 },
+        { month: 'Sep', score: 62 },
+      ];
+    }
+    const updatedDrift = [...existingDrift, { month: currentMonth, score, date: new Date() }];
 
     const riskProfile = {
+      isConfigured: true,
       score,
       category,
-      timeHorizon: timeHorizon || '5-10 years',
-      primaryGoal: primaryGoal || 'Wealth Growth',
-      maxLossTolerancePct: maxLossTolerancePct || 15,
+      timeHorizon: timeHorizon || req.user.riskProfile?.timeHorizon || '5-10 Years',
+      primaryGoal: primaryGoal || req.user.riskProfile?.primaryGoal || 'Growth',
+      maxLossTolerancePct: maxLossTolerancePct || req.user.riskProfile?.maxLossTolerancePct || 20,
+      lossTolerance: lossTolerance || req.user.riskProfile?.lossTolerance || 'Moderate',
+      incomeStability: incomeStability || req.user.riskProfile?.incomeStability || 'High',
+      answers: answers || req.user.riskProfile?.answers || {},
+      driftHistory: driftHistory || updatedDrift,
       updatedAt: new Date()
     };
 
